@@ -357,29 +357,33 @@
     // ---- Sign-in configuration ----
     // Same Client ID you put in the backend's .env as GOOGLE_CLIENT_ID.
     // The Client ID is public/safe to expose in frontend code.
-    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+    // Replace this line in your HTML script:
+const GOOGLE_CLIENT_ID = "1035654595541-7vr3gkalutv66asdvt6pcd7kk0j47r62.apps.googleusercontent.com";
     // Where the backend (server.js) is running.
     const API_BASE = "http://localhost:4000";
 
     const navArea = document.getElementById("auth-area-nav");
     const ctaArea = document.getElementById("auth-area-cta");
-
     function renderSignedOut() {
-      navArea.innerHTML = "";
-      ctaArea.innerHTML = "";
-      window.google.accounts.id.renderButton(navArea, {
-        theme: "outline",
-        size: "medium",
-        text: "signin",
-        shape: "pill",
-      });
-      window.google.accounts.id.renderButton(ctaArea, {
-        theme: "filled_blue",
-        size: "large",
-        text: "signup_with",
-        shape: "pill",
-      });
-    }
+  navArea.innerHTML = "";
+  ctaArea.innerHTML = "";
+
+  // Navbar Button (Purple background, white text)
+  window.google.accounts.id.renderButton(navArea, {
+    theme: "filled_blue", // Uses solid filled style
+    size: "medium",
+    text: "signin",
+    shape: "pill",
+  });
+
+  // CTA Section Button
+  window.google.accounts.id.renderButton(ctaArea, {
+    theme: "filled_blue",
+    size: "large",
+    text: "signup_with",
+    shape: "pill",
+  });
+}
 
     function renderSignedIn(user) {
       navArea.innerHTML = `
@@ -460,11 +464,31 @@
     };
   </script>
   <!-- Google OAuth SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
-  <!-- Your main JS logic -->
-  <script src="script.js" defer></script>
+   <!-- Google Identity Services Script -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
+
+
+<script>
+  async function handleCredentialResponse(response) {
+    // Send ID Token to backend for verification
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      console.log('Logged in successfully:', data.user);
+      // Redirect or update UI
+    } else {
+      console.error('Authentication failed:', data.error);
+    }
+  }
+</script>
 </body>
 
 </html>
