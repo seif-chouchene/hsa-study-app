@@ -36,9 +36,8 @@ sections.forEach((section) => observer.observe(section));
 
 // ---- 2. Google OAuth & Auth State Management ----
 
-// Paste your real Google Client ID here
-const GOOGLE_CLIENT_ID = "1035654595541-7vr3gkalutv66asdvt6pcd7kk0j47r62.apps.googleusercontent.com";
-const API_BASE = window.location.origin;
+const API_BASE = `${window.location.origin}/api`;
+let GOOGLE_CLIENT_ID = "";
 
 const navArea = document.getElementById("auth-area-nav");
 const ctaArea = document.getElementById("auth-area-cta");
@@ -47,7 +46,7 @@ function renderSignedOut() {
   if (!navArea || !ctaArea) return;
   navArea.innerHTML = "";
   ctaArea.innerHTML = "";
-  
+
   if (window.google?.accounts?.id) {
     window.google.accounts.id.renderButton(navArea, {
       theme: "outline",
@@ -72,7 +71,7 @@ function renderSignedIn(user) {
       <img src="${user.picture}" alt="" style="width:22px;height:22px;border-radius:50%;" />
       ${user.name.split(" ")[0]}
     </span>`;
-    
+
   ctaArea.innerHTML = `
     <a href="#" class="cta-primary-button" id="logout-btn-cta">
       <span>Signed in as ${user.name} — Log out</span>
@@ -134,18 +133,22 @@ async function checkExistingSession() {
   renderSignedOut();
 }
 
-window.onload = function () {
-  if (!window.google || GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-    console.warn(
-      "Google Sign-In not configured: Update GOOGLE_CLIENT_ID in script.js and server.js with your real Client ID."
-    );
-    return;
-  }
-  
-  window.google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleCredentialResponse,
-  });
-  
-  checkExistingSession();
-};
+window.onload = async function () {
+  try {
+    // 1. Fetch Client ID dynamically from backend
+    const res = await fetch(`${API_BASE}/auth/config`);
+    const data = await res.json();
+    GOOGLE_CLIENT_ID = data.clientId;
+
+    if (!window.google || !GOOGLE_CLIENT_ID) {
+      console.warn("Google Sign-In not initialized: missing Client ID or SDK.");
+      return;
+    }
+
+    // 2. Initialize Google Auth with the fetched ID
+    window.google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+    });
+
+    //
